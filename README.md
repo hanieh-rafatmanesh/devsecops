@@ -1,4 +1,4 @@
-# devsecops
+# Trivy
 # Trivy Server and DefectDojo Integration
 
 This document explains how to deploy Trivy Server and DefectDojo, and how to integrate them so that Trivy scan results can be automatically imported into DefectDojo.
