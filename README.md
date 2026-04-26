@@ -185,20 +185,7 @@ curl -X POST "http://192.168.101.144:8080/api/v2/import-scan/" \
 ### 7.1 Generate Report
 
 ```bash
-docker run --rm \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /home/tplan/trivy/java-db:/root/.cache/trivy/java-db \
-  -v $(pwd):/output \
-  docker.lib2.tiddev.com/aquasec/trivy:0.69.1 \
-  image \
-  --server http://localhost:4954 #(if host mode network) \
-  --format json \
-  --output /output/trivy-report.json \
-  --skip-java-db-update \
-  --scanners vuln \
-  --severity CRITICAL,HIGH \
-  --no-progress \
-  repo.tiddev.com/docker/keyhan/pktb-ekyc:${bamboo.planRepository.branchDisplayName}-${bamboo.buildNumber}
+docker run --rm --network host  -v /var/run/docker.sock:/var/run/docker.sock   -v /home/tplan/trivy/java-db:/root/.cache/trivy/java-db   -v $(pwd):/output  docker.lib2.tiddev.com/aquasec/trivy:0.69.1   image   --server http://localhost:4954   --format json --output /output/trivy-report.json  --skip-java-db-update   --scanners vuln   --severity CRITICAL,HIGH   --no-progress  repo.tiddev.com/docker/keyhan/pktb-ekyc:${bamboo.planRepository.branchDisplayName}-${bamboo.buildNumber}
 ```
 
 ### 7.2 Upload CI/CD Scan to DefectDojo
