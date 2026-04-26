@@ -191,15 +191,6 @@ docker run --rm --network host  -v /var/run/docker.sock:/var/run/docker.sock   -
 ### 7.2 Upload CI/CD Scan to DefectDojo
 
 ```bash
-curl -X POST "http://192.168.101.144:8080/api/v2/import-scan/" \
-  -H "Authorization: Token 9e593f563d1c1d25de5c9c7fd3a4d88d7a47d574" \
-  -F "engagement=2" \
-  -F "scan_type=Trivy Scan" \
-  -F "file=@trivy-report.json" \
-  -F "active=true" \
-  -F "verified=true" \
-  -F "close_old_findings=true" \
-  -F "build_id=${bamboo.buildNumber}" \
-  -F "version=repo.tiddev.com/docker/keyhan/pktb-ekyc:${bamboo_planRepository_branch}-${bamboo_buildNumber}"
+curl -X POST "http://192.168.101.144:8080/api/v2/import-scan/"   -H "Authorization: Token 9e593f563d1c1d25de5c9c7fd3a4d88d7a47d574"   -F "engagement=2"   -F "scan_type=Trivy Scan"   -F "file=@trivy-report.json"   -F "active=true"   -F "verified=true"   -F "close_old_findings=true"  -F "build_id=${bamboo.buildNumber}"    -F "version=repo.tiddev.com/docker/keyhan/pktb-ekyc:${bamboo_planRepository_branch}-${bamboo_buildNumber}"
 ```
 
