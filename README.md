@@ -1,4 +1,3 @@
-# Trivy
 # Trivy Server and DefectDojo Integration
 
 This document explains how to deploy Trivy Server and DefectDojo, and how to integrate them so that Trivy scan results can be automatically imported into DefectDojo.
@@ -25,7 +24,7 @@ Create a `docker-compose.yml` file:
 version: "3.3"
 services:
   trivy-server:
-    image: docker.lib2.tiddev.com/aquasec/trivy:0.69.1
+    image: aquasec/trivy:0.69.1
     container_name: trivy-server
     restart: unless-stopped
     volumes:
@@ -62,14 +61,14 @@ Example: scanning the latest nginx image:
 docker run --rm --network host \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v /home/tplan/trivy/java-db:/root/.cache/trivy/java-db \
-  docker.lib2.tiddev.com/aquasec/trivy:0.69.1 \
+  aquasec/trivy:0.69.1 \
   image \
   --server http://localhost:4954 \
   --skip-java-db-update \
   --scanners vuln \
   --severity CRITICAL,HIGH \
   --no-progress \
-  docker.lib2.tiddev.com/nginx:latest
+  nginx:latest
 ```
 
 ## 4. Install DefectDojo on another VM
@@ -89,7 +88,7 @@ docker-compose up -d
 Default Web URL:
 
 ```
-http://<defectdojo-server-IP>:8080
+http://<<defectdojo-server-IP>>:8080
 ```
 
 ### 4.3 Retrieve Admin Password
@@ -114,8 +113,8 @@ Web UI → Admin → API v2 → Generate Token
 ### 5.2 Get Product Types
 
 ```bash
-curl -X GET "http://192.168.101.144:8080/api/v2/product_types/" \
-  -H "Authorization: Token 9e593f563d1c1d25de5c9c7fd3a4d88d7a47d574"
+curl -X GET "http://<<defectdojo-server-IP>>:8080/api/v2/product_types/" \
+  -H "Authorization: Token 18ad85a6225254712357c4c3d5e85a50c434e6dd"
 ```
 
 Example: using product type ID = 1
@@ -123,12 +122,12 @@ Example: using product type ID = 1
 ### 5.3 Create a Product
 
 ```bash
-curl -X POST "http://192.168.101.144:8080/api/v2/products/" \
-  -H "Authorization: Token 9e593f563d1c1d25de5c9c7fd3a4d88d7a47d574" \
+curl -X POST "http://<<defectdojo-server-IP>>:8080/api/v2/products/" \
+  -H "Authorization: Token 18ad85a6225254712357c4c3d5e85a50c434e6dd" \
   -H "Content-Type: application/json" \
   -d '{
-   "name": "Container Security",
-   "description": "Trivy scans for container images",
+   "name": "Keyhan",
+   "description": "Keyhan Project",
    "prod_type": 1
   }'
 ```
@@ -136,12 +135,17 @@ curl -X POST "http://192.168.101.144:8080/api/v2/products/" \
 ### 5.4 Create Engagement
 
 ```bash
-curl -X POST "http://192.168.101.144:8080/api/v2/engagements/" \
-  -H "Authorization: Token 9e593f563d1c1d25de5c9c7fd3a4d88d7a47d574" \
+curl -X POST "http://<<defectdojo-server-IP>>:8080/api/v2/engagements/" \
+  -H "Authorization: Token 18ad85a6225254712357c4c3d5e85a50c434e6dd" \
   -H "Content-Type: application/json" \
-  -d "{
-    \"name\": \"Trivy CI Pipeline\",\n    \"product\": 1,\n    \"engagement_type\": \"CI/CD\",\n    \"status\": \"In Progress\",\n    \"target_start\": \"2026-04-22\",\n    \"target_end\": \"2027-04-22\"}
-"
+  -d '{
+    "name": "Trivy Image Scan",
+    "product": 1,
+    "engagement_type": "CI/CD",
+    "status": "In Progress",
+    "target_start": "2026-04-27",
+    "target_end": "2027-04-27"
+  }'
 ```
 
 Your DefectDojo instance is now ready.
@@ -151,27 +155,15 @@ Your DefectDojo instance is now ready.
 ### 6.1 Generate Trivy Report (JSON)
 
 ```bash
-docker run --rm \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /home/tplan/trivy/java-db:/root/.cache/trivy/java-db \
-  -v $(pwd):/output \
-  docker.lib2.tiddev.com/aquasec/trivy:0.69.1 \
-  image \
-  --server http://localhost:4954 #(if host mode network)\
-  --format json \
-  --output /output/trivy-report.json \
-  --skip-java-db-update \
-  --scanners vuln \
-  --severity CRITICAL,HIGH \
-  --no-progress \
-  docker.lib2.tiddev.com/nginx:latest
+docker run --rm --network host  -v /var/run/docker.sock:/var/run/docker.sock   -v /home/tplan/trivy/java-db:/root/.cache/trivy/java-db   docker.lib2.tiddev.com/aquasec/trivy:0.69.1   image   --server http://localhost:4954   --skip-java-db-update   --scanners vuln   --severity CRITICAL,HIGH   --no-progress   nginx:latest
+
 ```
 
 ### 6.2 Upload Report to DefectDojo
 
 ```bash
-curl -X POST "http://192.168.101.144:8080/api/v2/import-scan/" \
-  -H "Authorization: Token 9e593f563d1c1d25de5c9c7fd3a4d88d7a47d574" \
+curl -X POST "http://<<defectdojo-server-IP>>:8080/api/v2/import-scan/" \
+  -H "Authorization: Token 18ad85a6225254712357c4c3d5e85a50c434e6dd" \
   -F "engagement=2" \
   -F "scan_type=Trivy Scan" \
   -F "file=@trivy-report.json" \
@@ -185,12 +177,69 @@ curl -X POST "http://192.168.101.144:8080/api/v2/import-scan/" \
 ### 7.1 Generate Report
 
 ```bash
-docker run --rm --network host  -v /var/run/docker.sock:/var/run/docker.sock   -v /home/tplan/trivy/java-db:/root/.cache/trivy/java-db   -v $(pwd):/output  docker.lib2.tiddev.com/aquasec/trivy:0.69.1   image   --server http://localhost:4954   --format json --output /output/trivy-report.json  --skip-java-db-update   --scanners vuln   --severity CRITICAL,HIGH   --no-progress  repo.tiddev.com/docker/keyhan/pktb-ekyc:${bamboo.planRepository.branchDisplayName}-${bamboo.buildNumber}
+docker run --rm --network host  -v /var/run/docker.sock:/var/run/docker.sock   -v /home/tplan/trivy/java-db:/root/.cache/trivy/java-db   -v $(pwd):/output  aquasec/trivy:0.69.1   image   --server http://localhost:4954   --format json --output /output/trivy-report.json  --skip-java-db-update   --scanners vuln   --severity CRITICAL,HIGH   --no-progress  repo.local.com/docker/keyhan/pktb-ekyc:${bamboo.planRepository.branchDisplayName}-${bamboo.buildNumber}
 ```
 
 ### 7.2 Upload CI/CD Scan to DefectDojo
 
 ```bash
-curl -X POST "http://192.168.101.144:8080/api/v2/import-scan/"   -H "Authorization: Token 9e593f563d1c1d25de5c9c7fd3a4d88d7a47d574"   -F "engagement=2"   -F "scan_type=Trivy Scan"   -F "file=@trivy-report.json"   -F "active=true"   -F "verified=true"   -F "close_old_findings=true"  -F "build_id=${bamboo.buildNumber}"    -F "version=repo.tiddev.com/docker/keyhan/pktb-ekyc:${bamboo_planRepository_branch}-${bamboo_buildNumber}"
+curl -X POST "http://<<defectdojo-server-IP>>:8080/api/v2/import-scan/"   -H "Authorization: Token 18ad85a6225254712357c4c3d5e85a50c434e6dd"   -F "engagement=2"   -F "scan_type=Trivy Scan"   -F "file=@trivy-report.json"   -F "active=true"   -F "verified=true"   -F "close_old_findings=true"  -F "build_id=${bamboo.buildNumber}"    -F "version=repo.local.com/docker/keyhan/pktb-ekyc:${bamboo_planRepository_branch}-${bamboo_buildNumber}"
+```
+
+-----------------------------------------
+
+## 8.Send Report of SonarQube to DefectDojo
+
+### 8.1 Create New Engagement
+
+```
+curl -X POST "http://<<defectdojo-server-IP>>:8080/api/v2/engagements/" \
+  -H "Authorization: Token 18ad85a6225254712357c4c3d5e85a50c434e6dd" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Sonar Code Scan",
+    "product": 1,  
+    "engagement_type": "CI/CD",
+    "status": "In Progress",
+    "target_start": "2026-04-27",
+    "target_end": "2027-04-27"
+  }'
+```
+
+
+```
+curl -X POST "http://<<defectdojo-server-IP>>:8080/api/v2/products/" \
+  -H "Authorization: Token 18ad85a6225254712357c4c3d5e85a50c434e6dd" \
+  -H "Content-Type: application/json" \
+  -d '{
+   "name": "MBT",
+   "description": "MBT Project",
+   "prod_type": 1
+  }'
+```
+
+
+``` 
+curl -X POST "http://<<defectdojo-server-IP>>:8080/api/v2/engagements/" \
+  -H "Authorization: Token 18ad85a6225254712357c4c3d5e85a50c434e6dd" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "trivy image Scan",
+    "product": 2,  
+    "engagement_type": "CI/CD",
+    "status": "In Progress",
+    "target_start": "2026-04-27",
+    "target_end": "2027-04-27"
+  }'
+```
+
+
+## 9.CI/CD Pipeline for SonarQube
+
+
+```
+curl -u squ_7e6bb70029fbc959053742209a776a981b7818ce: "http://<<SonarQube-server-IP>>:9001/api/issues/search?componentKeys=integration-gateway&ps=500" -o sonar-report.json
+---
+curl -X POST "http://<<defectdojo-server-IP>>:8080/api/v2/import-scan/" -H "Authorization: Token 18ad85a6225254712357c4c3d5e85a50c434e6dd" -F "file=@sonar-report.json" -F "scan_type=SonarQube Scan" -F "engagement=4" -F "active=true" -F "verified=true"
 ```
 
